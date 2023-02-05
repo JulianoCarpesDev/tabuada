@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap');
+:root {
+  --primary-color: rgb(17, 86, 102);
+  --primary-color-darker: rgb(9, 48, 56);
+}
+
+* {
+  box-sizing: border-box;
+  outline: 0;
+}
+
+
+.containerInicial {
+  text-align: center;
+  width: 100%;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.container {
+  display: inline-block;
+  width: 200px;
+  margin: 10px 20px;
+  background: #fff;
+  padding: 5px;
+  border-style: groove;
+  border-radius: 10px;
+}
+.container1 {
+  display: inline-block;
+  width: 200px;
+  margin: 10px 20px;
+  background: #fff;
+  padding: 5px;
+  border-style: groove;
+  border-radius: 10px;
+}
+.container2 {
+  display: inline-block;
+  width: 200px;
+  margin: 10px 20px;
+  background: #fff;
+  padding: 5px;
+  border-style: groove;
+  border-radius: 10px;
+}
+
+form input, form label, form, button, h3, select{
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.conta1, .conta2{
+  margin-left: 35%;
+  margin-bottom: 0;
+  width: 50px;
+
+}
+
+
+
+form button {
+  border: none;
+  background: rgb(18, 48, 108);;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  width: 100%;
+}
+form button:hover {
+  background: var(--primary-color-darker);
+}
+h1{
+  border-style: groove;
+  text-align: center;
+  color: rgb(18, 48, 108);
+  font-family: "Times New Roman", Times, serif;
+}
+h3{
+  font-family: "Times New Roman", Times, serif;
+  border-style: dashed;
+  width: 100%;
+  background-color: aliceblue;
+  color: rgb(239, 161, 15);
+  border: 1px solid rgb(72, 85, 72);
+  text-align: left;
+  padding: 15px;
+  
+
+}
+input[type=number] {
+  border: 0px solid rgb(183, 174, 174);
+  border-radius: 4px;
+  width: 100%;
+}
+select{
+  width: 100%;
+  color: rgb(18, 48, 108);
+}

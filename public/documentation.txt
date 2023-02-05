@@ -1,0 +1,649 @@
+instalação do mongo Db
+
+1 criar conta no site mongo = ja criado
+qualquer dúvida ver aula 138
+
+2 url endereço: mongodb+srv://JulianoCarpes:<admin123>@cluster0.wptm6wj.mongodb.net/?retryWrites=true&w=majority
+
+
+vamos instalar npm install dotenv cria variaveis de ambiente para depois remorvermos os arquivos do repositório
+nao vamos enviar o arquivo para o repositorio
+
+vamos instalar o mongoose irá fazer a modelagem dos dados, conexão e tipo de dado
+npm install mongoose
+
+apos instalado vamos no arquivo server.js e chamamos mongoose
+const mongoose = require('mongoose')
+
+depois chamamos a conexão
+const conexao = 'mongodb+srv://JulianoCarpes:admin123@cluster0.wptm6wj.mongodb.net/BASEDEDADOS?retryWrites=true&w=majority'
+mongoose.connect(conexao)
+
+nesta aula 15 vamos instalar os pacotes express session (para salvar uma seção do usuario um registro
+ex de senha salvas etc
+vamos instalar o connect mongo(para salvar as seções no mongo Db)
+
+vamos instalar o flash back (mensagem que são enviadas por algum erro e depois apagadas)
+npm i express-session connect-mongo connect-flash
+
+nesta aula instalamos o npm i helmet e o npm i csurf
+apos instalado chamamos o helmet const helmet = require('helmet') e o
+const csrf = require('csurf')
+depois abrimos novo arquivo ejs erro 4004.ejs
+e criamos os middlewares 
+exports.checkCsrfError = (err,req,res,next)=>{
+
+  if (err && 'EBADCSRFTOKEN'=== err.code){
+    return res.render('404')
+  }
+}
+
+exports.csrfMiddleware = (req, res, next)=>{
+  res.locals.csrfToken = req.csrfToken()
+  next()
+}
+
+chamamos os middlewares no server.js const { middlewareGlobal, outroMiddleware,checkCsrfError,csrfMiddleware} = require('./src/middlewares/middleware')
+e depois
+app.use(checkCsrfError)
+app.use(csrfMiddleware)
+
+caso não gere o token irá abrir a pagina de erro 
+
+no arquivo index. ejs atribuimos <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+que define o valor do toque e atribui ao formulario a necessidade do toque
+caso não tenha irá abrir a pagina ded erro.
+
+OBS
+
+O Helmet é para segurança da aplicação, portanto, caso você esteja com um sistema ainda em desenvolvimento, usando urls como "127.0.0.1", "localhost" ou até um servidor com IP externo, sem usar SSL (https), é recomendável desativá-lo. Ele pode bloquear importação de scripts e arquivos de CSS.
+
+Caso ocorra erros ao importar o bundle.js, arquivos de CDN (como bootstrap, por exemplo) ou CSS, basta desativar o helmet para correção.
+
+Isso só ocorrerá em sistemas sem SSL (sem https na URL).
+
+
+
+resumao:
+
+
+require('dotenv').config()  recebe arquivo .env onde estão cadastrados nossos dados do banco
+de dados 
+CONNECTIONSTRING=mongodb+srv://JulianoCarpes:admin123@cluster0.wptm6wj.mongodb.net/BASEDEDADOS?retryWrites=true&w=majority
+
+
+const express = require('express')
+const app = express()
+
+acima o inicio do express
+
+aqui o mongoose que quem vai modelar nassa base de dados, nos retorna uma promise
+
+const mongoose = require('mongoose')
+mongoose.set('strictQuery', true);
+mongoose.connect(process.env.CONNECTIONSTRING).then(() => {
+    console.log('conectado ao BD')
+    app.emit('pronto')
+}).catch((e)=>console.log(e))
+
+ // aqui vai emitir pornto e ser escultado por
+
+app.on('pronto', () => {
+    app.listen(3000, () => {
+        console.log('acessar http://localhost:3000')
+        console.log('Servidor executando na porta 3000')
+    })
+})
+
+
+const session = require('express-session') aqui armezana um cook do navegador
+do id do cliente, quando o cliente retorna ao site ja esta salvo esse id
+
+const MongoStore = require('connect-mongo') é pra salvar as sessions no mongo Db
+
+const flash = require('connect-flash') são mensagens  de erros ou feedbacks destrutivas
+aquelas que são enviadas para o navegadopr e depois se apaga, so retorna acessando novamente
+essas são salvas nas sessions
+
+const routers = require('./routes')
+são as rotas da nossa aplicação
+
+const path = require('path') para acessar caminhos
+
+const helmet = require('helmet')
+recomendação de segurança
+
+const csrf = require('csurf') para formularios exige token para inpedir queoutros formularios
+externos sobrescrevam nosso formulario
+
+const { middlewareGlobal, outroMiddleware,checkCsrfError,csrfMiddleware} = require('./src/middlewares/middleware')
+são middlewares funções que são execultadas nas rotas
+ex: rota.get('/',homeController.paginaInicial)
+ex 2: rota.post('/',homeController.trataPost)
+
+app.use(express.urlencoded({ extended: true }))
+ta definido que aqui podemos postar formulçarios para dentro da nossa 
+aplicação
+podemos tambem utilizar o parse de json
+app.use(express.json())
+
+app.use(express.static(path.resolve(__dirname, 'public'))) define os aquivos estatico
+que podem ser acessados diretamente no desenvolvimento
+
+aqui configuração de sessons 
+// criando as sessions
+const sessionOptions = session({
+    secret:'qualquer coisa aqui',
+    store: MongoStore.create({ mongoUrl: process.env.CONNECTIONSTRING }), 
+    resave:false,
+    saveUninitialized:false,
+    cookie:{
+        maxAge: 1000 *60 *60*24*7,
+        httpOnly: true
+    }
+})
+
+
+aqui são arquivos que renderizamos na tela
+app.set('views', path.resolve(__dirname, 'src', 'views'))
+geralmente são html
+app.set('view engine', 'ejs') é o que utilizamos para escrever html no ejs
+
+chamando o csrf
+app.use(csrf())
+
+chamando os middlewares
+app.use(middlewareGlobal)
+app.use(checkCsrfError)
+app.use(csrfMiddleware)
+app.use(outroMiddleware)
+
+chamando as rotas
+app.use(routers)
+
+escutando o servidor
+app.on('pronto', () => {
+    app.listen(3000, () => {
+        console.log('acessar http://localhost:3000')
+        console.log('Servidor executando na porta 3000')
+    })
+})
+
+obs padrão de projeto mvc models views e controllers
+
+ler parte do mvc 
+
+O padrão de projeto aqui que a gente está utilizando é como eu já te falei M V.
+
+CN A gente vai trabalhar com moda eu vi os controles Models viu os controles.
+
+E aí como é que funciona isso.
+
+Isso aqui é mais ou menos assim.
+
+A gente tem a rota linear a rota vai decidir qual Controller vai ser utilizado qual o controle e quem
+
+vai controlar aquela rota.
+
+Por exemplo eu entrei na home.
+
+Quem vai controlar essa rota é o robô Controller.
+
+No caso então esse é o controle e quem quem vai decidir coisas sobre essa rota então isso é o controle.
+
+O único trabalho do controller e decide.
+
+Olha esse é o modo dessa dessa rota aqui que vai controlar dados da base de dados e coisas relacionadas
+
+com dados.
+
+E esse o outro que vi o que vai ser usado nessa aplicação aqui.
+
+Então o trabalho do Controller é só escolher qualquer modo qualquer ouviu que vai ser utilizado.
+
+A gente vai fazer algumas coisinhas também no controle mas geralmente assim controla a rota passa escolhe
+
+o controle.
+
+Então esse é o controle vai ser utilizado o controle escolhe qual modelo e qual o vídeo vai ser utilizado
+
+para aquela rota.
+
+Por exemplo se a gente olhar aqui no controle e a página inicial.
+
+A gente vai olhar aqui no volume me.
+
+A gente tem uma função que gera uma página inicial.
+
+Se a gente fizer aqui no vão um controle.
+
+A gente tem esse Página Inicial aqui mas deixa eu ver se a gente criou algum modo.
+
+A gente já criou um modo aqui do robô mas a gente não está utilizando esse modo que na próxima sessão
+
+a gente vai fazer muito uso disso que ainda não se preocupe mas num caso normal geralmente você importaria
+
+esse modo pra cá pra dentro do controle.
+
+E também aqui dentro você decidiria viu iria ser renderizados em seu trabalho controle o trabalho do
+
+modo eu já ia trabalhar com dados.
+
+Ou seja tudo que é referente a dados ou a base de dados em si e ao modo eu que vai trabalhar é viu e
+
+auto explicativo né viu.
+
+E o que o usuário vai ver.
+
+Então esse é o padrão de projeto que a gente está utilizando na próxima sessão conforme eu te falei
+
+você vai entender melhor como as coisas se encaixam aqui.
+
+Deixa eu ver se tem mais alguma coisa para a gente fazer um resumo aqui.
+
+Acho que não não acho que não tem mais nada para a gente falar.
+
+Então é isso pessoal fiz só um resumo aqui passando em tudo aquilo que a gente falou mais ou menos nem
+
+ninguém passando por cima de tudo só para você relembrar porque na próxima sessão a gente vai fazer
+
+muito uso de tudo isso daqui.
+
+Então queria que você por exemplo alguma aula que você fez há dois três dias atrás provavelmente fugiu
+
+da memória ou já esqueceu se tiver alguma coisa para você rever volta e rever nesse momento que na próxima
+
+sessão a gente vai fazer muito uso desses aqui.
+
+Beleza então vou deixar essa aula assim e a gente se vê na proximal.
+
+Grande abraço.
+
+Só.
+
+
+completo
+
+Fala Pessoal essa aula aqui vai ser mais um resumo da aula anterior das aulas anteriores sobre artes.
+
+Hoje a gente criou esse entre aspas template aqui pra gente deixar pronto pra copiar e criar criar as
+
+nossas aplicações já do zero usando esse exemplo aí TIC.
+
+E a gente vai fazer isso na próxima sessão pois eu queria que você fizesse o seguinte abra em sua pasta
+
+da aula anterior pra mim que está aula 17 e Acompanhe comigo aqui que a gente vai fazer um resumo só
+
+pra passar por cima de tudo o que a gente falou na sala porque nessa sessão no caso sobre eles parece
+
+que foi muita coisinha e talvez a gente Edite alguma coisinha de sono alguma coisa mas então abre o
+
+seu aqui sua pasta da aula anterior e vamos checar tudo aqui eu vou te passar a linha por linha aqui
+
+falando ali se isso isso aí se fizer isso e depois na próxima sessão a gente vai querer um projetivo
+
+bem pequeno uma agenda onde a gente cria fazer um crude né gente cria edita atualiza e apaga contatos
+
+dessa agenda e a gente vai utilizar esse padrão de projeto MVC que a gente está utilizando aqui e a
+
+gente vai também ter um sistema de login onde o usuário pode criar sua conta e logar pra trabalhar dentro
+
+da agenda.
+
+é bem simples mas vai dar para você ter uma noção bem melhor assim de como utilizar esse projeto que
+
+beleza eu vou abrir o meu servo aqui.
+
+Vamo vim ver que linha por linha só falando que cada coisa.
+
+Esse Doc aqui referente às nossas variáveis de ambiente que estão configuradas é um equívoco.
+
+Ponto é que esse arquivo aqui tem vai ter 100 usuários coisas.
+
+Eu já mudei minha sei que vou tripudiar de novo coisas relacionadas com o seu ambiente de desenvolvimento
+
+que você não quer publicar isso num repositório ou então enfim coisas relacionadas com o seu ambiente
+
+de desenvolvimento as suas senhas seus e-mails tudo seu.
+
+E daí quando você for para a produção você pode criar um arquivo em um ponto ou enviá la num servidor
+
+que contém os dados corretos do servidor e daí em nenhum desenvolvedor do projeto vai baixar ou enviar
+
+esse arquivo por isso a gente põe um ponto bit para ignorar esse arquivo aqui esse arquivo não vai nem
+
+ser baixado e nem ser enviado por nenhum desenvolvedor pelo menos não deveria nem no caso aqui nesse
+
+blog que se preze o app que se preze não tem nem muito o que falar pq a gente falou disso despreza a
+
+seção inteira aqui e aqui a gente tem um longo uso não usa aquele.
+
+Quem vai modelar a nossa base de dados e garantir que os dados que a gente salve na base de dados são
+
+realmente os dados da forma que a gente quer salvar.
+
+Por isso a gente cria um esquema né falando Olhe por exemplo se eu tenho lá uma tabela entre aspas lá
+
+não chama a tabela mas vamos chamar de tabela porque várias bases de dados chamam isso de tabela so
+
+tem uma tabela de contatos lá na base de dados eu posso ter um esquema que fala como essa tabela deve
+
+como os dados devem ser salvos nessa tabela por exemplo um contato tem que ter nome tem que ter sobrenome
+
+pode ter um e-mail enfim essas coisas assim dão pra isso a gente utilizo morangos 99 por cento de tudo
+
+o que você tá vendo aqui são padrões do mercado entendeu todo mundo utiliza essas mesmas coisas.
+
+Então por exemplo Mongo uso hoje já substitui o próprio driver do próprio mongo DB.
+
+A maioria das pessoas já vai utilizar o bom uso ao invés de utilizar o próprio driver oficial do Mango
+
+DB salvo em alguns casos mas você pode pesquisar e que você vai ver o Mango é bastante utilizado para
+
+trabalhar com base de dados e ele não retorna uma promessa.
+
+é por isso que a gente fez essa entre aspas gambiarra que quando ele estiver conectado ele vai emitir.
+
+Ele não é o nosso aplicativo vai emitir um evento falando que o Mango usa e já está conectado então
+
+o app já está pronto e daí em baixo a gente pode começar a ouvir e escutar esse evento e falar beleza
+
+agora a gente pode começar a ouvir requisições aqui e beleza.
+
+Feito isso vamos passar para o próximo aqui pra gente não ficar parado muito tempo em sessões como eu
+
+te falei geralmente sessões é pra identificar um navegador de um cliente vai ter você vai salvar um
+
+cu que você não é.
+
+O programa vai salvar um cu que com um dia ele daquele cuco no computador do cliente.
+
+Toda vez que ele conectar no servidor ele vai mandar esse CUC o nosso servidor vai checar esse cu esse
+
+aí.
+
+Nessa sessão essa seção vai falar Olha esse cliente que é o Joãozinho que já conectou anteriormente.
+
+Então eu posso confiar nesse navegador eu posso logar esse cliente com esses dados que você vai ver
+
+na próxima sessão não precisa se preocupar com isso.
+
+Nesse momento não gostou.
+
+E pra falar que as sessões vão ser salvas dentro da base de dados porque por padrão elas são salvas
+
+em memória.
+
+E se a gente utilizar sessões em memória o servidor de produção a gente fica sem memória rapidamente.
+
+Por isso a gente utiliza esse mongóis só pra salvar as sessões na base de dados.
+
+Esse flash são um flash Meças né.
+
+São aquelas mensagens auto destrutivas.
+
+No caso uma mensagem em que você vai sem que você ler ela.
+
+Ela vai sumir da base de dados ela não vai existir mais.
+
+Isso faz com que esse flash Messages seja perfeito pra mandar mensagens por exemplo e vou mandar algum
+
+feed back para os seus usuários.
+
+Você vai ver também o tipo sendo muito utilizado na próxima sessão.
+
+E essas mensagens aqui são salvas em sessão.
+
+é por isso que a gente precisava das sessões pra gente configurar esse aqui sem exceção.
+
+Essas mensagens aqui não vai funcionar não vão funcionar porque elas são salvas na seção beleza rotas
+
+são as rotas da nossa aplicação ou seja Barra Rome Barra contato página inicial enfim qualquer coisa
+
+que seja referente à rota da aplicação vai cair aqui perto.
+
+A gente já falou muito pra trabalhar com caminhos e aqui a gente já falou especificamente disse então
+
+não vou nem entrar em detalhes.
+
+O Met é uma recomendação do próprio pessoal que se preze também não vou entrar muito em detalhes mas
+
+se você quiser ele tem uma documentação bem extensa que você pode ler tudo o que ele faz dos cabeçalhos
+
+ali para deixar nossa aplicação mais segura C SRF.
+
+Foi aqui que a gente se instalou na verdade são C SRF tokens aqui que a gente cria para os nossos formulários.
+
+Todos os nossos formulários dentro da aplicação tem que ter um CSR token.
+
+Isso faz com que nenhum aplicativo externo nenhum site externo consiga postar coisas pra dentro da nossa
+
+aplicação.
+
+Isso também é alguma coisa relacionado com segurança.
+
+Então por isso também não vou entrar muito em detalhes.
+
+Você pode também ler isso aqui chama cross site eu esqueci já sabia que eu esqueci mas você pode ler
+
+pesquisar se e você vai encontrar aqui o que significa isso é uma falha de segurança que a gente já
+
+corrigiu essas de baixo aqui são os nossos heróis e o Expresso confia muito em mim.
+
+2 O que são 2 milhões são funções que são executadas na rota tipo asim uma como uma cadeia de coisas
+
+que é executada.
+
+Por exemplo se eu pego uma rota que qualquer você vê que essa rota que pega essa rota a primeira que
+
+essa rota aqui é uma rota que já já responde o cliente termina ali a conexão.
+
+Mas pode ocorrer alguns casos e você vai ver isso também na seção posterior e que você quer fazer alguma
+
+coisa no meio do caminho que antes de responder o cliente ou depois de responder o cliente você cria
+
+funções que executam no meio do caminho e uma função passa para a outra função terminar de ser executada
+
+que passa para a outra que passa para a outra.
+
+Você pode ter por exemplo 50 milhões executando um atrás do outro.
+
+1 Fazer alguma coisa passa para o outro o outro faz outra coisa passa para o outro e assim por diante
+
+o que o que a gente vai criar na próxima aula vai na próxima sessão desculpe.
+
+Vai ser um miúdo que checa se o usuário está logado.
+
+Por exemplo se uma página precisa ser acessada só por usuários ligados a gente vai criar um milhão e
+
+meio que vai checar.
+
+Olha se o usuário está logado não.
+
+Então eu não vou responder essa requisição.
+
+Ele vai voltar para Roma e vai colocar uma mensagem lá falando Olha você precisa fazer login para acessar
+
+essa página.
+
+Então um usuário não logado nunca conseguiria acessar a página que tivesse depois do meu amigo que me
+
+queria que ele tivesse aqui.
+
+No meio do caminho essa função aqui sendo executada.
+
+Essa outra que nunca seria executada caso o usuário não estivesse logado.
+
+Você vai ver estar próximo próxima acessar.
+
+Não se preocupe com isso neste momento aqui a gente está utilizando realmente deixou dar uma ajeitada
+
+aqui no negócio.
+
+Faltou o seguinte aqui essa linha aqui o RL em Cold Extended Turquia está falando que a gente pode postar
+
+formulários pra dentro da nossa aplicação e tenho uma outra que é muito utilizada.
+
+Quer dizer isso a gente poderia também fazer o pós.
+
+Isso pra dentro da aplicação então se você quiser adicionar essa linha que eu apontei usa para responder
+
+a isso.
+
+Ele também é muito utilizado aqui então a gente já vai deixar isso pronto também configurado na nossa
+
+aplicação que é outra coisa é o estático arquivos estáticos aqui são todos os arquivos que são estáticos
+
+na nossa aplicação e que podem ser acessados diretamente por exemplo imagens CSS JavaScript.
+
+Esses tipos de arquivos podem ser devem ser acessados diretamente.
+
+Então por exemplo no nosso endereço a gente vai tê la Barra e aí tudo o que tiver dentro dessa pasta
+
+Public.
+
+A gente vai poder acessar diretamente por exemplo Barra sete barras JS Barra bando.
+
+A gente acessa diretamente o nosso arquivo de bando.
+
+Por isso a gente colocou esses arquivos estáticos aqui.
+
+Beleza outra coisa que há aqui embaixo e configurações então configurações de seção seção Options Flash
+
+meça diz.
+
+Aqui Vhils são os arquivos que a gente renderizar na tela.
+
+Geralmente vídeos são arquivos HTML.
+
+Aqui você está vendo o caminho deles então aqui nos nossos SRC Vhils a gente tem por exemplo ainda que
+
+a gente vai ter várias páginas aqui e viu ending em time que a gente está utilizando pra renderizar
+
+esse HTML.
+
+Tem várias conforme eu te falei.
+
+Você pode utilizar qualquer uma delas que você preferir.
+
+Eu prefiro o DS porque eu acho ele muito similar ao HTML.
+
+Então fica muito assim evidente que você usa HTML você quer utilizar JavaScript você abre as tags do
+
+S e utiliza ideias.
+
+Então por isso que eu gosto bastante dele tenho outras que são bem diferentes de HTML por exemplo é
+
+tentação pra você escreveu HTML ou seja não tem hashtags nem de abertura nem de fechamento aqui.
+
+Enfim tem tem outros e o ele vai utilizar esse aqui que a gente deixou na aula anterior para controlar
+
+a aplicação.
+
+Aqui a gente executa fiel se fora essas coisas aqui e aqui a gente imprime coisas na tela.
+
+A gente já falou disso eu não vou entrar muito em detalhes.
+
+Tem até um arquivo criado aqui outra coisa voltando aqui então a ideia é essa um vírus aqui em cima
+
+de gente tá falando qual pasta que a nossa pasta de vírus que é essa pasta aqui e aqui embaixo a gente
+
+tá falando com o indiano a gente vai utilizar em casa.
+
+E aqui a gente está configurando CCR token.
+
+No caso aqui os nossos milhões que a gente configurou aqui a gente está chamando as faltas.
+
+E aqui a gente está mandando a nossa aplicação escutar coisas aqui.
+
+Então beleza só terei uma linha aqui nesse código.
+
+Beleza só uma linha aqui alterada nesse código essa do dia é isso ou aquilo que tinha faltado mesmo.
+
+Deixa eu dar uma olhada aqui em outras coisas pra gente fala outra coisa também.
+
+O padrão de projeto aqui que a gente está utilizando é como eu já te falei M V.
+
+CN A gente vai trabalhar com moda eu vi os controles Models viu os controles.
+
+E aí como é que funciona isso.
+
+Isso aqui é mais ou menos assim.
+
+A gente tem a rota linear a rota vai decidir qual Controller vai ser utilizado qual o controle e quem
+
+vai controlar aquela rota.
+
+Por exemplo eu entrei na home.
+
+Quem vai controlar essa rota é o robô Controller.
+
+No caso então esse é o controle e quem quem vai decidir coisas sobre essa rota então isso é o controle.
+
+O único trabalho do controller e decide.
+
+Olha esse é o modo dessa dessa rota aqui que vai controlar dados da base de dados e coisas relacionadas
+
+com dados.
+
+E esse o outro que vi o que vai ser usado nessa aplicação aqui.
+
+Então o trabalho do Controller é só escolher qualquer modo qualquer ouviu que vai ser utilizado.
+
+A gente vai fazer algumas coisinhas também no controle mas geralmente assim controla a rota passa escolhe
+
+o controle.
+
+Então esse é o controle vai ser utilizado o controle escolhe qual modelo e qual o vídeo vai ser utilizado
+
+para aquela rota.
+
+Por exemplo se a gente olhar aqui no controle e a página inicial.
+
+A gente vai olhar aqui no volume me.
+
+A gente tem uma função que gera uma página inicial.
+
+Se a gente fizer aqui no vão um controle.
+
+A gente tem esse Página Inicial aqui mas deixa eu ver se a gente criou algum modo.
+
+A gente já criou um modo aqui do robô mas a gente não está utilizando esse modo que na próxima sessão
+
+a gente vai fazer muito uso disso que ainda não se preocupe mas num caso normal geralmente você importaria
+
+esse modo pra cá pra dentro do controle.
+
+E também aqui dentro você decidiria viu iria ser renderizados em seu trabalho controle o trabalho do
+
+modo eu já ia trabalhar com dados.
+
+Ou seja tudo que é referente a dados ou a base de dados em si e ao modo eu que vai trabalhar é viu e
+
+auto explicativo né viu.
+
+E o que o usuário vai ver.
+
+Então esse é o padrão de projeto que a gente está utilizando na próxima sessão conforme eu te falei
+
+você vai entender melhor como as coisas se encaixam aqui.
+
+Deixa eu ver se tem mais alguma coisa para a gente fazer um resumo aqui.
+
+Acho que não não acho que não tem mais nada para a gente falar.
+
+Então é isso pessoal fiz só um resumo aqui passando em tudo aquilo que a gente falou mais ou menos nem
+
+ninguém passando por cima de tudo só para você relembrar porque na próxima sessão a gente vai fazer
+
+muito uso de tudo isso daqui.
+
+Então queria que você por exemplo alguma aula que você fez há dois três dias atrás provavelmente fugiu
+
+da memória ou já esqueceu se tiver alguma coisa para você rever volta e rever nesse momento que na próxima
+
+sessão a gente vai fazer muito uso desses aqui.
+
+Beleza então vou deixar essa aula assim e a gente se vê na proximal.
+
+Grande abraço.
