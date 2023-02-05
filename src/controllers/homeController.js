@@ -35,5 +35,5 @@ exports.trataPost = (req, res) => {
     })
     //  res.send(`Bem vindo ${req.body.cliente}`)
     
-    return res.redirect('back')
+  
 }
