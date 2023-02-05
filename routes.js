@@ -8,6 +8,6 @@ rota.get('/',homeController.paginaInicial)
 rota.post('/',homeController.trataPost)
 
 // novo controller para contato
-rota.get('/contato',contatoControler.paginaInicial)
+//rota.get('/contato',contatoControler.paginaInicial)
 
 module.exports = rota
